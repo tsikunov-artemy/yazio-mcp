@@ -871,7 +871,7 @@ Example:
       base_unit: args.base_unit,
       is_private: args.is_private,
       nutrients: {
-        'energy.energy': (args.energy_kcal * 4.184) / 100,
+        'energy.energy': args.energy_kcal / 100,
         'nutrient.protein': args.protein / 100,
         'nutrient.carb': args.carbs / 100,
         'nutrient.fat': args.fat / 100,

@@ -1,0 +1,39 @@
+// --- Custom Products ---
+    this.server.registerTool(
+      'get_user_products',
+      {
+        description: 'Get list of IDs of user custom products',
+        inputSchema: GetUserProductsInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true },
+      },
+      async () => {
+        return await this.getUserProducts();
+      }
+    );
+
+    this.server.registerTool(
+      'create_custom_product',
+      {
+        description: 'Create a new private custom product in Yazio. Provide nutrition per 100g/ml: energy_kcal, protein, carbs, fat.',
+        inputSchema: CreateCustomProductInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false },
+      },
+      async (args: CreateCustomProductInput) => {
+        return await this.createCustomProduct(args);
+      }
+    );
+
+    this.server.registerTool(
+      'delete_custom_product',
+      {
+        description: 'Delete a custom product by ID',
+        inputSchema: DeleteCustomProductInputSchema,
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
+      },
+      async (args: DeleteCustomProductInput) => {
+        return await this.deleteCustomProduct(args);
+      }
+    );
+  }
+
+  private setupPromptHandlers(): void {

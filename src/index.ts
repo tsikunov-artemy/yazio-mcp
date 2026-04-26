@@ -33,6 +33,12 @@ import {
   type GetUserSuggestedProductsInput,
   type AddConsumedItemInput,
   type RemoveConsumedItemInput,
+  CreateCustomProductInputSchema,
+  DeleteCustomProductInputSchema,
+  GetUserProductsInputSchema,
+  type CreateCustomProductInput,
+  type DeleteCustomProductInput,
+  type GetUserProductsInput,
   type AddWaterIntakeInput,
 } from './schemas.js';
 import type {
@@ -350,6 +356,44 @@ class YazioMcpServer {
         return await this.addUserWaterIntake(args);
       }
     );
+  
+// --- Custom Products ---
+    this.server.registerTool(
+      'get_user_products',
+      {
+        description: 'Get list of IDs of user custom products',
+        inputSchema: GetUserProductsInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true },
+      },
+      async () => {
+        return await this.getUserProducts();
+      }
+    );
+
+    this.server.registerTool(
+      'create_custom_product',
+      {
+        description: 'Create a new private custom product in Yazio. Provide nutrition per 100g/ml: energy_kcal, protein, carbs, fat.',
+        inputSchema: CreateCustomProductInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false },
+      },
+      async (args: CreateCustomProductInput) => {
+        return await this.createCustomProduct(args);
+      }
+    );
+
+    this.server.registerTool(
+      'delete_custom_product',
+      {
+        description: 'Delete a custom product by ID',
+        inputSchema: DeleteCustomProductInputSchema,
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
+      },
+      async (args: DeleteCustomProductInput) => {
+        return await this.deleteCustomProduct(args);
+      }
+    );
+
   }
 
   private setupPromptHandlers(): void {
@@ -801,6 +845,71 @@ Example:
     }
   }
 
+
+  private async getUserProducts() {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+    const resp = await fetch('https://yzapi.yazio.com/v15/user/products', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const ids = await resp.json();
+    return { content: [{ type: 'text' as const, text: `Custom product IDs:\n\n${JSON.stringify(ids, null, 2)}` }] };
+  }
+
+  private async createCustomProduct(args: CreateCustomProductInput) {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+
+    // Конвертируем ккал -> кДж/г (Yazio хранит энергию в кДж на грамм)
+    // 1 ккал = 4.184 кДж, делим на 100 чтобы получить на 1г
+    const body = {
+      id: uuidv4(),
+      name: args.name,
+      category: args.category,
+      base_unit: args.base_unit,
+      is_private: args.is_private,
+      nutrients: {
+        'energy.energy': (args.energy_kcal * 4.184) / 100,
+        'nutrient.protein': args.protein / 100,
+        'nutrient.carb': args.carbs / 100,
+        'nutrient.fat': args.fat / 100,
+      },
+      ...(args.producer ? { producer: args.producer } : {}),
+    };
+
+    const resp = await fetch('https://yzapi.yazio.com/v15/user/products', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(`Failed to create product: ${resp.status} - ${err}`);
+    }
+
+    return { content: [{ type: 'text' as const, text: `Successfully created custom product "${args.name}" with ID: ${body.id}` }] };
+  }
+
+  private async deleteCustomProduct(args: DeleteCustomProductInput) {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+
+    const resp = await fetch(`https://yzapi.yazio.com/v15/user/products/${args.product_id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(`Failed to delete product: ${resp.status} - ${err}`);
+    }
+
+    return { content: [{ type: 'text' as const, text: `Successfully deleted custom product with ID: ${args.product_id}` }] };
+  }
 
   async run(): Promise<void> {
     const transport = new StdioServerTransport();

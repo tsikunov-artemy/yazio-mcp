@@ -94,3 +94,31 @@ export type RemoveConsumedItemInput = z.infer<typeof RemoveConsumedItemInputSche
 export type AddWaterIntakeInput = z.infer<typeof AddWaterIntakeInputSchema>;
 export type GetDietaryPreferencesInput = z.infer<typeof GetDietaryPreferencesInputSchema>;
 export type GetUserGoalsInput = z.infer<typeof GetUserGoalsInputSchema>;
+
+// Валидные категории продуктов Yazio (проверено эмпирически через API)
+export const ProductCategorySchema = z.enum([
+  'meat', 'vegetables', 'fruits', 'fish', 'poultry',
+  'sauces', 'bread', 'pasta', 'drinksalcoholic'
+]).describe('Product category');
+
+export const CreateCustomProductInputSchema = z.object({
+  name: z.string().describe('Product name'),
+  category: ProductCategorySchema,
+  base_unit: z.enum(['g', 'ml']).default('g').describe('Base unit: grams (g) or milliliters (ml)'),
+  is_private: z.boolean().default(true).describe('Whether the product is private (visible only to you)'),
+  energy_kcal: z.number().describe('Energy in kcal per 100g/ml'),
+  protein: z.number().describe('Protein in grams per 100g/ml'),
+  carbs: z.number().describe('Carbohydrates in grams per 100g/ml'),
+  fat: z.number().describe('Fat in grams per 100g/ml'),
+  producer: z.string().optional().describe('Producer / brand name (optional)'),
+});
+
+export const DeleteCustomProductInputSchema = z.object({
+  product_id: ProductIdSchema.describe('ID of the custom product to delete'),
+});
+
+export const GetUserProductsInputSchema = EmptyInputSchema;
+
+export type CreateCustomProductInput = z.infer<typeof CreateCustomProductInputSchema>;
+export type DeleteCustomProductInput = z.infer<typeof DeleteCustomProductInputSchema>;
+export type GetUserProductsInput = z.infer<typeof GetUserProductsInputSchema>;

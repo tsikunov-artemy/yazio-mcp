@@ -1,0 +1,9 @@
+export const GetUserRecipesInputSchema = EmptyInputSchema;
+export const GetRecipeInputSchema = z.object({
+  recipe_id: z.uuid().describe('Recipe UUID')
+});
+export const GetUserMealsInputSchema = EmptyInputSchema;
+
+export type GetUserRecipesInput = z.infer<typeof GetUserRecipesInputSchema>;
+export type GetRecipeInput = z.infer<typeof GetRecipeInputSchema>;
+export type GetUserMealsInput = z.infer<typeof GetUserMealsInputSchema>;

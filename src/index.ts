@@ -39,6 +39,12 @@ import {
   type CreateCustomProductInput,
   type DeleteCustomProductInput,
   type GetUserProductsInput,
+  GetUserRecipesInputSchema,
+  GetRecipeInputSchema,
+  GetUserMealsInputSchema,
+  type GetUserRecipesInput,
+  type GetRecipeInput,
+  type GetUserMealsInput,
   type AddWaterIntakeInput,
 } from './schemas.js';
 import type {
@@ -394,6 +400,42 @@ class YazioMcpServer {
       }
     );
 
+    this.server.registerTool(
+      'get_user_recipes',
+      {
+        description: 'Get list of user recipe IDs',
+        inputSchema: GetUserRecipesInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true },
+      },
+      async () => {
+        return await this.getUserRecipes();
+      }
+    );
+
+    this.server.registerTool(
+      'get_recipe',
+      {
+        description: 'Get detailed information about a recipe by ID (name, nutrients, portion_count, products, recipe_portions)',
+        inputSchema: GetRecipeInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true },
+      },
+      async (args: GetRecipeInput) => {
+        return await this.getRecipe(args);
+      }
+    );
+
+    this.server.registerTool(
+      'get_user_meals',
+      {
+        description: 'Get list of user meals (saved combinations of products)',
+        inputSchema: GetUserMealsInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true },
+      },
+      async () => {
+        return await this.getUserMeals();
+      }
+    );
+
   }
 
   private setupPromptHandlers(): void {
@@ -548,11 +590,67 @@ Example:
     try {
       const foodEntries = await client.user.getConsumedItems({ date: new Date(args.date) });
 
+      // Enrich products with names and producer info
+      const enrichedProducts = await Promise.all(
+        foodEntries.products.map(async (item) => {
+          try {
+            const product = await client.products.get(item.product_id);
+            return {
+              ...item,
+              product_name: product?.name || null,
+              product_producer: product?.producer || null,
+            };
+          } catch (error) {
+            // If product fetch fails, return item without enrichment
+            console.error(`Failed to fetch product ${item.product_id}:`, error);
+            return {
+              ...item,
+              product_name: null,
+              product_producer: null,
+            };
+          }
+        })
+      );
+
+      // Enrich recipe_portions with names
+      const recipePortions = (foodEntries.recipe_portions ?? []) as Array<Record<string, unknown>>;
+      // @ts-expect-error - accessing internal auth token
+      const recipeToken = client.auth.token.access_token;
+      const enrichedRecipePortions = await Promise.all(
+        recipePortions.map(async (item) => {
+          const recipeId = item.recipe_id as string | undefined;
+          if (!recipeId) return item;
+          try {
+            const resp = await fetch(`https://yzapi.yazio.com/v15/user/recipes/${recipeId}`, {
+              headers: { 'Authorization': `Bearer ${recipeToken}` },
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const recipe = await resp.json() as { name?: string };
+            return {
+              ...item,
+              recipe_name: recipe?.name || null,
+            };
+          } catch (error) {
+            console.error(`Failed to fetch recipe ${recipeId}:`, error);
+            return {
+              ...item,
+              recipe_name: null,
+            };
+          }
+        })
+      );
+
+      const enrichedFoodEntries = {
+        ...foodEntries,
+        products: enrichedProducts,
+        recipe_portions: enrichedRecipePortions,
+      };
+
       return {
         content: [
           {
             type: 'text' as const,
-            text: `Food entries for ${args.date}:\n\n${JSON.stringify(foodEntries, null, 2)}`,
+            text: `Food entries for ${args.date}:\n\n${JSON.stringify(enrichedFoodEntries, null, 2)}`,
           },
         ],
       };
@@ -909,6 +1007,43 @@ Example:
     }
 
     return { content: [{ type: 'text' as const, text: `Successfully deleted custom product with ID: ${args.product_id}` }] };
+  }
+
+
+  private async getUserRecipes() {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+    const resp = await fetch('https://yzapi.yazio.com/v15/user/recipes', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) throw new Error(`Failed to get recipes: ${resp.status}`);
+    const recipeIds = await resp.json() as string[];
+    return { content: [{ type: 'text' as const, text: `User recipes (${recipeIds.length} total):\n\n${JSON.stringify(recipeIds, null, 2)}` }] };
+  }
+
+  private async getRecipe(args: GetRecipeInput) {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+    const resp = await fetch(`https://yzapi.yazio.com/v15/recipes/${args.recipe_id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) throw new Error(`Failed to get recipe: ${resp.status}`);
+    const recipe = await resp.json();
+    return { content: [{ type: 'text' as const, text: `Recipe details:\n\n${JSON.stringify(recipe, null, 2)}` }] };
+  }
+
+  private async getUserMeals() {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+    const resp = await fetch('https://yzapi.yazio.com/v15/user/meals', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) throw new Error(`Failed to get meals: ${resp.status}`);
+    const meals = await resp.json();
+    return { content: [{ type: 'text' as const, text: `User meals (${meals.length} total):\n\n${JSON.stringify(meals, null, 2)}` }] };
   }
 
   async run(): Promise<void> {

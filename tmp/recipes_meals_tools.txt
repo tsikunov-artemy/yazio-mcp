@@ -1,0 +1,35 @@
+    this.server.registerTool(
+      'get_user_recipes',
+      {
+        description: 'Get list of user recipe IDs',
+        inputSchema: GetUserRecipesInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true },
+      },
+      async () => {
+        return await this.getUserRecipes();
+      }
+    );
+
+    this.server.registerTool(
+      'get_recipe',
+      {
+        description: 'Get detailed information about a recipe by ID (name, nutrients, portion_count, products, recipe_portions)',
+        inputSchema: GetRecipeInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true },
+      },
+      async (args: GetRecipeInput) => {
+        return await this.getRecipe(args);
+      }
+    );
+
+    this.server.registerTool(
+      'get_user_meals',
+      {
+        description: 'Get list of user meals (saved combinations of products)',
+        inputSchema: GetUserMealsInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true },
+      },
+      async () => {
+        return await this.getUserMeals();
+      }
+    );

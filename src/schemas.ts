@@ -122,3 +122,12 @@ export const GetUserProductsInputSchema = EmptyInputSchema;
 export type CreateCustomProductInput = z.infer<typeof CreateCustomProductInputSchema>;
 export type DeleteCustomProductInput = z.infer<typeof DeleteCustomProductInputSchema>;
 export type GetUserProductsInput = z.infer<typeof GetUserProductsInputSchema>;
+export const GetUserRecipesInputSchema = EmptyInputSchema;
+export const GetRecipeInputSchema = z.object({
+  recipe_id: z.uuid().describe('Recipe UUID')
+});
+export const GetUserMealsInputSchema = EmptyInputSchema;
+
+export type GetUserRecipesInput = z.infer<typeof GetUserRecipesInputSchema>;
+export type GetRecipeInput = z.infer<typeof GetRecipeInputSchema>;
+export type GetUserMealsInput = z.infer<typeof GetUserMealsInputSchema>;

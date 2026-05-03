@@ -1,0 +1,35 @@
+  private async getUserRecipes() {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+    const resp = await fetch('https://yzapi.yazio.com/v15/user/recipes', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) throw new Error(`Failed to get recipes: ${resp.status}`);
+    const recipeIds = await resp.json() as string[];
+    return { content: [{ type: 'text' as const, text: `User recipes (${recipeIds.length} total):\n\n${JSON.stringify(recipeIds, null, 2)}` }] };
+  }
+
+  private async getRecipe(args: GetRecipeInput) {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+    const resp = await fetch(`https://yzapi.yazio.com/v15/recipes/${args.recipe_id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) throw new Error(`Failed to get recipe: ${resp.status}`);
+    const recipe = await resp.json();
+    return { content: [{ type: 'text' as const, text: `Recipe details:\n\n${JSON.stringify(recipe, null, 2)}` }] };
+  }
+
+  private async getUserMeals() {
+    const client = await this.ensureAuthenticated();
+    // @ts-expect-error - accessing internal auth token
+    const token = client.auth.token.access_token;
+    const resp = await fetch('https://yzapi.yazio.com/v15/user/meals', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) throw new Error(`Failed to get meals: ${resp.status}`);
+    const meals = await resp.json();
+    return { content: [{ type: 'text' as const, text: `User meals (${meals.length} total):\n\n${JSON.stringify(meals, null, 2)}` }] };
+  }

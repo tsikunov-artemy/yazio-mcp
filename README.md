@@ -14,11 +14,13 @@ An MCP (Model Context Protocol) server that connects Claude/Cursor to your Yazio
 
 - 🔐 **Authentication** - Connect with your Yazio account
 - 📊 **Nutrition Analysis** - Get comprehensive diet data and insights
-- 🍎 **Food Tracking** - Search, add, and manage food entries
+- 🍎 **Food Tracking** - Search, add, and manage food entries (enriched with product/recipe names)
+- 🍳 **Recipes & Meals** - Access your saved recipes and meal combinations
 - 🏃‍♂️ **Fitness Data** - Track exercises and water intake
 - ⚖️ **Weight Monitoring** - View weight history and trends
 - 🎯 **Goal Management** - Access and manage nutrition goals
 - 🔍 **Product Search** - Search Yazio's extensive [food database](https://www.yazio.com/en/foods)
+- ➕ **Custom Products** - Create and manage your own food products
 
 ## 🚀 Quick Start
 
@@ -88,20 +90,46 @@ Easily log meals you forgot to track in the Yazio app directly from Claude or Cu
 
 ## 🛠️ Available Tools
 
+### 📊 Nutrition & Diary
 | Tool | Description | Key Parameters |
 |------|-------------|----------------|
 | `get_user_daily_summary` | Get daily nutrition summary | `date` |
-| `get_user_consumed_items` | Get food entries for a date | `date` |
-| `get_user_weight` | Get weight data | - |
-| `get_user_exercises` | Get exercise data | `date` |
-| `get_user_water_intake` | Get water intake | `date` |
-| `get_user_goals` | Get nutrition goals | - |
-| `get_user_settings` | Get user preferences | - |
+| `get_user_consumed_items` | Get food entries for a date (enriched with product/recipe names) | `date` |
+| `add_user_consumed_item` | Add food to your log | `productId`, `amount`, `date`, `mealType` |
+| `remove_user_consumed_item` | Remove food from log | `itemId` |
+
+### 🍎 Products
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
 | `search_products` | Search food database | `query` |
 | `get_product` | Get detailed product info | `id` |
-| `add_user_consumed_item` | Add food to your log | `productId`, `amount`, `date`, `mealType` |
+| `get_user_products` | Get list of custom product IDs | - |
+| `create_custom_product` | Create custom product | `name`, `nutrients`, `category` |
+| `delete_custom_product` | Delete custom product | `product_id` |
+
+### 🍳 Recipes & Meals
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `get_user_recipes` | Get list of user recipe IDs | - |
+| `get_recipe` | Get recipe details (name, nutrients, products) | `recipe_id` |
+| `get_user_meals` | Get list of user meals (saved product combinations) | - |
+
+### 💧 Water & Exercise
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `get_user_water_intake` | Get water intake | `date` |
 | `add_user_water_intake` | Add water intake entry (cumulative value in ml) | `date`, `water_intake` |
-| `remove_user_consumed_item` | Remove food from log | `itemId` |
+| `get_user_exercises` | Get exercise data | `date` |
+
+### ⚖️ User Data
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `get_user` | Get user profile info | - |
+| `get_user_weight` | Get weight data | - |
+| `get_user_goals` | Get nutrition goals | - |
+| `get_user_settings` | Get user preferences | - |
+| `get_user_dietary_preferences` | Get dietary restrictions | - |
+| `get_user_suggested_products` | Get product suggestions | `daytime` |
 
 ## Test Connection
 

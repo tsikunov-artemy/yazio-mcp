@@ -84,12 +84,24 @@ dist/         — скомпилированный код (не коммитит
 - `add_water_intake` — добавить воду
 - `get_user_exercises` — тренировки за день
 
+### FatSecret (добавлено нами — отдельный источник, русская база)
+- `fatsecret_search_foods` — поиск русской еды/брендов (которых нет в Yazio), с КБЖУ на порцию
+- `fatsecret_autocomplete` — подсказки по частичному вводу
+
 ## Важные детали
 
 - Аутентификация: `YAZIO_USERNAME` + `YAZIO_PASSWORD` → токен через `yazio` npm-пакет
 - Рецепты вне SDK: работаем через прямой `fetch` к `/v15/user/recipes` и `/v15/recipes/{id}`
 - `add_water_intake` — monkey-patch поверх yazio-клиента (SDK не поддерживает, см. [issue #3](https://github.com/juriadams/yazio/issues/3))
 - `simple_products` в consumed items — всегда пустой массив, endpoint не существует
+
+### FatSecret (`src/fatsecret.ts`) — без авторизации, скрейп consumer-веба
+- Только поиск (справочник), дневник НЕ трогаем — его ведём в Yazio
+- Автокомплит: `auto.fatsecret.com?m=26&l=13` (JSONP), русский маркет
+- Поиск с КБЖУ: HTML-скрейп `www.fatsecret.ru/калории-питание/search`
+- ⚠️ У `www.fatsecret.ru` **просроченный TLS-серт** (CN=fatsecret.com, истёк 2022) → запрос идёт через `node:https` с `rejectUnauthorized:false` **только для этого хоста** (публичный поиск, кредов не передаём; Yazio — строгий TLS)
+- ⚠️ Хрупко: парсим их HTML регэкспами (`a.prominent`, `a.brand`, `div.smallText`) → смена вёрстки ломает парсер
+- `www.fatsecret.com` НЕ трогать — он за Cloudflare (403)
 
 ## Версии
 

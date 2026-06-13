@@ -46,7 +46,12 @@ import {
   type GetRecipeInput,
   type GetUserMealsInput,
   type AddWaterIntakeInput,
+  FatSecretSearchInputSchema,
+  FatSecretAutocompleteInputSchema,
+  type FatSecretSearchInput,
+  type FatSecretAutocompleteInput,
 } from './schemas.js';
+import { fatsecretSearchFoods, fatsecretAutocomplete } from './fatsecret.js';
 import type {
   YazioExerciseOptions,
   YazioSuggestedProductsOptions,
@@ -433,6 +438,36 @@ class YazioMcpServer {
       },
       async () => {
         return await this.getUserMeals();
+      }
+    );
+
+    this.server.registerTool(
+      'fatsecret_search_foods',
+      {
+        description:
+          'Search the FatSecret Russian food database (separate source from Yazio). ' +
+          'Great for Russian products/brands Yazio lacks (e.g. "Вкусно и Точка"). ' +
+          'Returns foods with brand, serving, and per-serving calories/fat/carbs/protein. ' +
+          'Read-only reference search; does NOT touch the Yazio diary.',
+        inputSchema: FatSecretSearchInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+      },
+      async (args: FatSecretSearchInput) => {
+        return await this.fatSecretSearch(args);
+      }
+    );
+
+    this.server.registerTool(
+      'fatsecret_autocomplete',
+      {
+        description:
+          'Autocomplete partial food names against the FatSecret Russian database. ' +
+          'Returns suggestion strings to refine a fatsecret_search_foods query.',
+        inputSchema: FatSecretAutocompleteInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+      },
+      async (args: FatSecretAutocompleteInput) => {
+        return await this.fatSecretAutocomplete(args);
       }
     );
 
@@ -1044,6 +1079,30 @@ Example:
     if (!resp.ok) throw new Error(`Failed to get meals: ${resp.status}`);
     const meals = await resp.json();
     return { content: [{ type: 'text' as const, text: `User meals (${meals.length} total):\n\n${JSON.stringify(meals, null, 2)}` }] };
+  }
+
+  private async fatSecretSearch(args: FatSecretSearchInput) {
+    const foods = await fatsecretSearchFoods(args.query, args.page ?? 0);
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `FatSecret results for "${args.query}" (${foods.length} found):\n\n${JSON.stringify(foods, null, 2)}`,
+        },
+      ],
+    };
+  }
+
+  private async fatSecretAutocomplete(args: FatSecretAutocompleteInput) {
+    const suggestions = await fatsecretAutocomplete(args.query);
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `FatSecret suggestions for "${args.query}":\n\n${JSON.stringify(suggestions, null, 2)}`,
+        },
+      ],
+    };
   }
 
   async run(): Promise<void> {

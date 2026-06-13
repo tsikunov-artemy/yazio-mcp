@@ -37,9 +37,9 @@
 
 ### Тулы
 
-- [ ] `fatsecret_search_foods` (query) — поиск русской еды, список с КБЖУ
-- [ ] `fatsecret_autocomplete` (query) — быстрые подсказки (опц.)
-- [ ] `fatsecret_get_food` (href/id) — детальная карточка КБЖУ
+- [x] `fatsecret_search_foods` (query, page?) — поиск русской еды, список с КБЖУ ✅ v0.0.16
+- [x] `fatsecret_autocomplete` (query) — быстрые подсказки ✅ v0.0.16
+- [ ] `fatsecret_get_food` (href/id) — детальная карточка КБЖУ (пока КБЖУ есть прямо в поиске, отдельная карточка не срочна)
 
 ### Опционально (если когда-нибудь захочется СИНК дневника FatSecret)
 

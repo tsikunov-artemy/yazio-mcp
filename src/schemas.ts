@@ -131,3 +131,15 @@ export const GetUserMealsInputSchema = EmptyInputSchema;
 export type GetUserRecipesInput = z.infer<typeof GetUserRecipesInputSchema>;
 export type GetRecipeInput = z.infer<typeof GetRecipeInputSchema>;
 export type GetUserMealsInput = z.infer<typeof GetUserMealsInputSchema>;
+
+// FatSecret (consumer web, Russian market) — search-only, no auth
+export const FatSecretSearchInputSchema = z.object({
+  query: z.string().describe('Food search text (Russian), e.g. "биг спешл"'),
+  page: z.number().int().min(0).optional().describe('0-based result page'),
+});
+export const FatSecretAutocompleteInputSchema = z.object({
+  query: z.string().describe('Partial food text for autocomplete suggestions'),
+});
+
+export type FatSecretSearchInput = z.infer<typeof FatSecretSearchInputSchema>;
+export type FatSecretAutocompleteInput = z.infer<typeof FatSecretAutocompleteInputSchema>;

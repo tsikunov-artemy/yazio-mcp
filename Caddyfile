@@ -1,0 +1,7 @@
+yazio.temukau.xyz {
+    @authorized header Authorization "Bearer {$YAZIO_MCP_TOKEN}"
+    handle @authorized {
+        reverse_proxy localhost:3000
+    }
+    respond 401
+}

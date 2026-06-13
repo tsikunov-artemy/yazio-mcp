@@ -448,6 +448,11 @@ class YazioMcpServer {
           'Search the FatSecret Russian food database (separate source from Yazio). ' +
           'Great for Russian products/brands Yazio lacks (e.g. "Вкусно и Точка"). ' +
           'Returns foods with brand, serving, and per-serving calories/fat/carbs/protein. ' +
+          'IMPORTANT: when a dish can be named several ways, call this tool MULTIPLE ' +
+          'times with query variations and aggregate the results — the exact dish name, ' +
+          'a descriptive phrasing, and key components. E.g. for "бефстроганов" also try ' +
+          '"тушёное мясо с пюре", "говядина тушёная", "бефстроганов с пюре". ' +
+          'Use fatsecret_autocomplete first if unsure how a product is spelled in the DB. ' +
           'Read-only reference search; does NOT touch the Yazio diary.',
         inputSchema: FatSecretSearchInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
